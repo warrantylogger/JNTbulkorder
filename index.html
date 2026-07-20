@@ -36,7 +36,7 @@
     min-height:100vh;
     padding:32px 20px 120px;
   }
-  .wrap{max-width:1000px;margin:0 auto;}
+  .wrap{max-width:1000px;margin:0 auto;width:100%;}
 
   header{
     display:flex;
@@ -156,6 +156,29 @@
 
   .req{color:var(--red);}
 
+  .paste-box{
+    background:#FAF8F3;
+    border:1.5px dashed var(--line);
+    border-radius:6px;
+    padding:18px;
+    margin-bottom:22px;
+  }
+  .paste-box label{
+    margin-bottom:8px;
+  }
+  .paste-hint{
+    text-transform:none;
+    font-weight:400;
+    color:var(--ink-soft);
+    font-size:13px;
+  }
+  .paste-box textarea{
+    min-height:100px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+  }
+  .paste-box .addbar{margin-top:12px;}
+
   .category-tabs{display:flex;gap:10px;margin-bottom:16px;}
   .cat-btn{
     font-family:'Space Grotesk',sans-serif;
@@ -186,7 +209,7 @@
   .phone-row input{flex:1;}
 
   /* Product picker */
-  .sizes{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+  .sizes{display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:12px;}
   #dehuPicker{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
   .size-btn{
     border:2px solid var(--line);
@@ -261,6 +284,20 @@
     border-color:var(--red);
     background:var(--error-bg);
   }
+  @keyframes blinkRed{
+    0%, 100% { background:var(--error-bg); border-color:var(--red); box-shadow:0 0 0 3px rgba(213,41,28,0.25); }
+    50% { background:#fff; border-color:var(--line); box-shadow:none; }
+  }
+  input.input-blink, textarea.input-blink{
+    animation:blinkRed 0.35s ease-in-out 4;
+  }
+  @keyframes blinkCard{
+    0%, 100% { border-color:var(--red); box-shadow:0 0 0 3px rgba(213,41,28,0.2); }
+    50% { border-color:var(--line); box-shadow:none; }
+  }
+  .card.card-blink{
+    animation:blinkCard 0.35s ease-in-out 4;
+  }
   textarea{resize:vertical;min-height:52px;}
   .field{margin-bottom:0;}
 
@@ -319,7 +356,8 @@
     border:1.5px dashed var(--line);
     border-radius:6px;
   }
-  table{width:100%;border-collapse:collapse;}
+  .table-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{width:100%;min-width:640px;border-collapse:collapse;}
   thead th{
     text-align:left;
     font-size:12px;
@@ -353,27 +391,34 @@
   .ref{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink-soft);}
   .addr{color:var(--ink-soft);font-size:13.5px;}
   .postal-cell{font-family:'IBM Plex Mono',monospace;font-size:14px;}
-  .row-actions{display:flex;gap:14px;align-items:center;white-space:nowrap;}
-  .edit-row, .rm{
+  .row-actions{display:flex;gap:6px;align-items:center;white-space:nowrap;}
+  .icon-btn{
     background:none;
-    border:none;
+    border:1.5px solid transparent;
     cursor:pointer;
-    padding:4px 2px;
-    font-family:'Space Grotesk',sans-serif;
-    font-weight:700;
-    font-size:14px;
+    padding:6px;
+    border-radius:5px;
     min-height:auto;
-  }
-  .edit-row{color:var(--edit-blue);}
-  .edit-row:hover{color:var(--edit-blue-dark);text-decoration:underline;}
-  .rm{color:var(--red);}
-  .rm:hover{color:var(--red-dark);text-decoration:underline;}
-
-  .download-wrap{
-    display:flex;
+    display:inline-flex;
+    align-items:center;
     justify-content:center;
-    margin-top:36px;
+    line-height:0;
+    transition:.12s;
   }
+  .icon-btn svg{width:18px;height:18px;display:block;}
+  .edit-row{color:var(--edit-blue);}
+  .edit-row:hover{background:var(--focus-bg);border-color:var(--edit-blue);}
+  .rm{color:var(--red);}
+  .rm:hover{background:var(--error-bg);border-color:var(--red);}
+
+  @keyframes flashGreenRow{
+    0%   { background:rgba(47,107,79,0.28); }
+    100% { background:transparent; }
+  }
+  tbody tr.row-flash-success{
+    animation:flashGreenRow 1.6s ease-out;
+  }
+
   .stamp-btn{
     background:var(--red);
     color:#fff;
@@ -389,14 +434,84 @@
   }
   .stamp-btn:hover{transform:translateY(-1px);box-shadow:0 4px 0 var(--red-dark);}
   .stamp-btn:disabled{background:#CBC5B8;box-shadow:none;cursor:not-allowed;transform:none;}
-  .download-hint{
-    text-align:center;
-    font-size:14px;
-    color:var(--ink-soft);
-    margin-top:12px;
+
+  .fab-btn{
+    position:fixed;
+    right:24px;
+    bottom:96px;
+    z-index:41;
+    width:52px;
+    height:52px;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--ink);
+    color:#fff;
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:22px;
+    line-height:1;
+    border-radius:50%;
+    box-shadow:0 3px 10px rgba(28,37,54,0.3);
+    min-height:auto;
+    opacity:0;
+    transform:translateY(8px);
+    pointer-events:none;
+    transition:opacity .2s, transform .2s, background .15s;
   }
+  .fab-btn.visible{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
+  }
+  .fab-btn:hover{background:#0f1522;transform:translateY(-2px);}
 
   .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
+
+  /* Sticky quick-access bar: stays visible while scrolling through a long manifest */
+  .sticky-bar{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:40;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    gap:20px;
+    padding:14px 24px;
+    background:rgba(241,239,234,0.92);
+    backdrop-filter:blur(6px);
+    border-top:1px solid var(--line);
+    box-shadow:0 -4px 16px rgba(28,37,54,0.08);
+  }
+  .sticky-bar.visible{display:flex;}
+  .sticky-bar-count{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    color:var(--ink-soft);
+  }
+  .sticky-bar-btn{
+    padding:12px 28px;
+    font-size:16px;
+  }
+  @media (max-width:640px){
+    .sticky-bar{padding:12px 16px;gap:12px;}
+    .sticky-bar-count{display:none;}
+    .sticky-bar-btn{flex:1;}
+  }
+
+  /* Wide desktop: give the layout a bit more breathing room */
+  @media (min-width:1440px){
+    body{padding:40px 20px 120px;}
+    .wrap{max-width:1160px;}
+    h1{font-size:40px;}
+  }
+
+  /* Tablet / narrow desktop window: keep two-up grids but let form fields stack
+     so labels and inputs don't get squeezed */
+  @media (max-width:900px){
+    .grid, .settings-grid{grid-template-columns:1fr;}
+  }
 
   @media (max-width:640px){
     body{font-size:16px;}
@@ -405,6 +520,9 @@
     .grid, .settings-grid{grid-template-columns:1fr;}
     h1{font-size:26px;}
     .stamp-btn{width:100%;text-align:center;padding:20px;}
+    .card{padding:18px;}
+    table{min-width:560px;}
+    thead th, tbody td{padding:10px 8px;font-size:13.5px;}
   }
 </style>
 </head>
@@ -443,7 +561,7 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="productCard">
     <h2><span class="n">2</span>Product</h2>
     <div class="category-tabs" id="categoryTabs">
       <button type="button" class="cat-btn active" data-cat="drybox">Dry Box</button>
@@ -451,17 +569,21 @@
     </div>
     <div class="sizes" id="sizePicker"></div>
     <div class="sizes" id="dehuPicker" style="display:none;"></div>
-    <div id="dehuSpecForm" class="settings-grid" style="display:none;margin-top:18px;">
-      <p class="full" style="grid-column:1/-1;margin:0 0 4px;font-size:14px;color:var(--ink-soft);">Box size for this variant hasn't been set yet — enter it once, it'll be remembered for the rest of your session.</p>
-      <div class="field"><label>Length (cm)</label><input id="dh_length" type="number" step="0.1"></div>
-      <div class="field"><label>Width (cm)</label><input id="dh_width" type="number" step="0.1"></div>
-      <div class="field"><label>Height (cm)</label><input id="dh_height" type="number" step="0.1"></div>
-      <div class="field"><label>Weight (kg)</label><input id="dh_weight" type="number" step="0.1"></div>
-    </div>
   </div>
 
   <div class="card">
     <h2><span class="n">3</span>Receiver details</h2>
+    <div class="paste-box">
+      <label for="r_paste">Paste customer message <span class="paste-hint">— paste their name, address, postal code and phone number, and we'll sort it into the fields below</span></label>
+      <textarea id="r_paste" placeholder="e.g.
+Jo *
+1 Sembawang Crescent - Skypark Residences, #02-03
+Singapore 757093
++65 9751 7222"></textarea>
+      <div class="addbar">
+        <button class="btn-primary" id="parsePasteBtn" type="button">Sort into fields</button>
+      </div>
+    </div>
     <div class="grid">
       <div class="field full"><label>Reference number <span class="req">*</span></label><input id="r_ref" placeholder="e.g. 18L-DBSG20260713145042"></div>
       <div class="field"><label>Receiver name <span class="req">*</span></label><input id="r_name" placeholder="e.g. Henry Tan"></div>
@@ -482,26 +604,28 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="manifestCard">
     <h2><span class="n">4</span>Manifest</h2>
     <div id="summaryArea"></div>
     <div id="manifestArea"><div class="manifest-empty">No orders added yet — pick a size and add your first order above.</div></div>
   </div>
 
-  <div class="download-wrap">
-    <button class="stamp-btn" id="downloadBtn" disabled>Download Excel ↓</button>
-  </div>
-  <p class="download-hint">Please download and proceed to the J&amp;T, file saved as <strong>singapore_delivery_order_en.xlsx</strong>.</p>
+</div>
 
+<button id="fabAddProduct" class="fab-btn" type="button" title="Jump back up to add another product">↑</button>
+
+<div class="sticky-bar" id="stickyBar">
+  <span class="sticky-bar-count" id="stickyBarCount">0 orders queued</span>
+  <button class="stamp-btn sticky-bar-btn" id="downloadBtnSticky" disabled>Download Excel ↓</button>
 </div>
 
 <script>
 const PRODUCTS = {
-  '9L':  {length:23, width:29, height:21.5, weight:1.5, value:45.0,   desc:'\n9L Portable Dry Box (Inner bag and moisture card included)'},
-  '18L': {length:26, width:27, height:30,   weight:2.9, value:75.0,   desc:'18L Dry Cabinet Box'},
-  '30L': {length:30, width:29, height:42,   weight:6.5, value:91.99,  desc:'30L Dry Cabinet Box'},
-  '38L': {length:29, width:32, height:49,   weight:7.5, value:125.0,  desc:'38L Dry Cabinet Box'},
-  '55L': {length:32, width:32, height:62,   weight:10,  value:216.52, desc:'55L Dry Cabinet Box'},
+  '9L':  {length:29.5, width:23.5, height:22.5, weight:2.75, value:45.0,   desc:'\n9L Portable Dry Box (Inner bag and moisture card included)'},
+  '18L': {length:32,   width:30,   height:35,   weight:3.65, value:75.0,   desc:'18L Dry Cabinet Box'},
+  '30L': {length:35,   width:38,   height:50,   weight:7.9,  value:91.99,  desc:'30L Dry Cabinet Box'},
+  '38L': {length:35,   width:38,   height:56,   weight:8.9,  value:125.0,  desc:'38L Dry Cabinet Box'},
+  '55L': {length:38,   width:37.5, height:68.5, weight:11.66,value:216.52, desc:'55L Dry Cabinet Box'},
 };
 const HEADERS = ['Service Type','Receiver Country','Receiver Province','Receiver City','Receiver State',
   'Reference Number','COD','Pickup Name','Pickup Contact Number','Pickup Postal Code','Pickup Address',
@@ -550,6 +674,18 @@ function attachRequiredValidation(ids){
 }
 
 // Checks required fields on submit attempt; marks empty ones red and focuses the first
+function triggerBlink(el){
+  el.classList.remove('input-blink');
+  void el.offsetWidth; // force reflow so the animation restarts even if it just ran
+  el.classList.add('input-blink');
+}
+
+function triggerCardBlink(el){
+  el.classList.remove('card-blink');
+  void el.offsetWidth;
+  el.classList.add('card-blink');
+}
+
 function validateRequired(ids){
   let firstInvalid = null;
   ids.forEach(id => {
@@ -561,7 +697,11 @@ function validateRequired(ids){
       el.classList.remove('input-error');
     }
   });
-  if(firstInvalid) firstInvalid.focus();
+  if(firstInvalid){
+    firstInvalid.scrollIntoView({behavior:'smooth', block:'center'});
+    firstInvalid.focus();
+    triggerBlink(firstInvalid);
+  }
   return !firstInvalid;
 }
 
@@ -803,37 +943,51 @@ Object.keys(PRODUCTS).forEach((size, colorIdx) => {
 });
 
 // ---- Products: Dehumidifier ----
+// Box size rule: 2 refills or fewer -> small box; 3+ refills -> large box.
+const DEHU_SMALL_BOX = {length:29, width:18, height:19};
+const DEHU_LARGE_BOX = {length:35, width:30, height:23};
 const DEHU_VARIANTS = [
-  {name:'Charger + 1 Refill (Set)', sku:'799710',          value:39.00},
-  {name:'Charger + 2 Refill',       sku:'799710-1Refill',  value:56.00},
-  {name:'Charger + 3 Refill',       sku:'799710-2Refill',  value:72.00},
-  {name:'Charger + 4 Refill',       sku:'799710-3Refill',  value:86.00},
-  {name:'Charger + 5 Refill',       sku:'799710-4Refill',  value:103.00},
-  {name:'Refill Only',              sku:'Refill',           value:18.00},
+  {name:'Charger + 1 Refill (Set)', sku:'799710',          value:39.00, refillCount:1, weight:1.4, box:DEHU_SMALL_BOX},
+  {name:'Charger + 2 Refill',       sku:'799710-1Refill',  value:56.00, refillCount:2, weight:1.9, box:DEHU_SMALL_BOX},
+  {name:'Charger + 3 Refill',       sku:'799710-2Refill',  value:72.00, refillCount:3, weight:2.3, box:DEHU_LARGE_BOX},
+  {name:'Charger + 4 Refill',       sku:'799710-3Refill',  value:86.00, refillCount:4, weight:2.8, box:DEHU_LARGE_BOX},
+  {name:'Charger + 5 Refill',       sku:'799710-4Refill',  value:103.00, refillCount:5, weight:3.3, box:DEHU_LARGE_BOX},
+  {name:'Refill Only',              sku:'Refill',           value:18.00, refillCount:null, weight:0.5, box:DEHU_SMALL_BOX},
 ];
-const dehuSpecs = {}; // cached per-variant box size entered by the user this session
 const dehuPicker = document.getElementById('dehuPicker');
 DEHU_VARIANTS.forEach((variant, colorIdx) => {
   const btn = document.createElement('div');
   btn.className = 'size-btn';
   btn.dataset.variant = variant.name;
   btn.innerHTML = `<div class="lbl" style="font-size:14px;color:${DEHU_COLOR};">${variant.name}</div>
-    <div class="dims">${variant.sku}</div>
+    <div class="dims">${variant.box.length}×${variant.box.width}×${variant.box.height}cm · ${variant.weight}kg</div>
     <div class="val">$${variant.value.toFixed(2)}</div>`;
   btn.addEventListener('click', () => {
     selectedDehuVariant = variant;
     document.querySelectorAll('#dehuPicker .size-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    setRefPrefix('');
-    const specForm = document.getElementById('dehuSpecForm');
-    if(dehuSpecs[variant.name]){
-      specForm.style.display = 'none';
-    } else {
-      specForm.style.display = 'grid';
-      ['dh_length','dh_width','dh_height','dh_weight'].forEach(id => document.getElementById(id).value='');
-    }
+    // Reference number prefix: "1CG{refill count}RF-" for charger sets,
+    // "RF{qty}-" for Refill Only (qty = how many loose refills, from the Item quantity field)
+    updateDehuRefPrefix();
   });
   dehuPicker.appendChild(btn);
+});
+
+function updateDehuRefPrefix(){
+  const variant = selectedDehuVariant;
+  if(!variant) return;
+  if(variant.refillCount){
+    setRefPrefix(`1CG${variant.refillCount}RF-`);
+  } else {
+    const qty = parseInt(document.getElementById('r_qty').value) || 1;
+    setRefPrefix(`RF${qty}-`);
+  }
+}
+// Keep the Refill Only prefix in sync as the quantity changes
+document.getElementById('r_qty').addEventListener('input', () => {
+  if(selectedCategory === 'dehumidifier' && selectedDehuVariant && !selectedDehuVariant.refillCount){
+    updateDehuRefPrefix();
+  }
 });
 
 document.getElementById('categoryTabs').addEventListener('click', (e) => {
@@ -845,7 +999,6 @@ document.getElementById('categoryTabs').addEventListener('click', (e) => {
   if(selectedCategory === 'drybox'){
     document.getElementById('sizePicker').style.display = 'grid';
     document.getElementById('dehuPicker').style.display = 'none';
-    document.getElementById('dehuSpecForm').style.display = 'none';
   } else {
     document.getElementById('sizePicker').style.display = 'none';
     document.getElementById('dehuPicker').style.display = 'grid';
@@ -856,6 +1009,127 @@ populateCodeSelect(document.getElementById('r_code'));
 stripSpacesOnInput(document.getElementById('r_contact'));
 attachRequiredValidation(['r_ref','r_name','r_contact','r_postal','r_address']);
 
+// ---- Paste & auto-sort customer details ----
+function parseCustomerPaste(text){
+  // Split on both newlines AND commas so this handles multi-line pastes
+  // ("Jo\nAddress\nSingapore 123456\n+65...") as well as single-line,
+  // comma-separated pastes ("Name, Address, Singapore 123456, +65...").
+  const rawLines = text.split(/\r?\n/)
+    .flatMap(line => line.split(','))
+    .map(l => l.trim())
+    .filter(Boolean);
+  if(!rawLines.length) return null;
+
+  // Postal code: an isolated 6-digit number (Singapore postal codes are always 6 digits)
+  let postal = '';
+  let postalLineIdx = -1;
+  rawLines.forEach((line, idx) => {
+    if(postal) return;
+    const m = line.match(/\b\d{6}\b/);
+    if(m){ postal = m[0]; postalLineIdx = idx; }
+  });
+
+  // Phone number: a segment made up ONLY of phone-like characters (digits, +, -, (), spaces)
+  // — this avoids mistaking an address segment that happens to contain several digits for a phone number.
+  let phoneCode = '+65';
+  let phoneNumber = '';
+  let phoneLineIdx = -1;
+  rawLines.forEach((line, idx) => {
+    if(phoneNumber || idx === postalLineIdx) return;
+    const looksLikePhone = /^[+()\-\s\d]+$/.test(line);
+    const digits = line.replace(/\D/g, '');
+    if(looksLikePhone && digits.length >= 7 && digits.length <= 15){
+      phoneLineIdx = idx;
+      // Singapore local numbers are 8 digits. If there's a "+", or the digit count
+      // is longer than a bare local number, try to match a known country code prefix
+      // (e.g. "6588978126" -> +65, 88978126). A plain 8-digit run is left as-is so a
+      // normal local number never gets mistaken for one with an embedded code.
+      if(line.includes('+') || digits.length !== 8){
+        const sortedCodes = [...COUNTRY_CODES].sort((a, b) => b.code.length - a.code.length);
+        const matchedCode = sortedCodes.find(c => digits.startsWith(c.code.slice(1)));
+        if(matchedCode){
+          phoneCode = matchedCode.code;
+          phoneNumber = digits.slice(matchedCode.code.length - 1);
+        } else if(line.includes('+')){
+          phoneCode = '+' + digits.slice(0, 2);
+          phoneNumber = digits.slice(2);
+        } else {
+          phoneNumber = digits;
+        }
+      } else {
+        phoneNumber = digits;
+      }
+    }
+  });
+
+  // Name: first remaining segment, with trailing markers like "*" trimmed off
+  const nameLineIdx = rawLines.findIndex((line, idx) => idx !== postalLineIdx && idx !== phoneLineIdx);
+  const name = nameLineIdx !== -1 ? rawLines[nameLineIdx].replace(/[\*\s]+$/, '').trim() : '';
+
+  // Address: whatever segments are left over, rejoined
+  let addressLines = rawLines.filter((line, idx) => idx !== nameLineIdx && idx !== postalLineIdx && idx !== phoneLineIdx);
+  if(postalLineIdx !== -1){
+    const leftover = rawLines[postalLineIdx].replace(/singapore/i, '').replace(postal, '').replace(/[,\s]+$/, '').trim();
+    if(leftover) addressLines.push(leftover);
+  }
+  // Drop bare "Singapore" segments (redundant on its own — country is implied) and
+  // de-duplicate repeated segments — common artifacts when an address is copied from a form.
+  addressLines = addressLines.filter(l => l.toLowerCase() !== 'singapore');
+  const seenSegments = new Set();
+  addressLines = addressLines.filter(l => {
+    const key = l.toLowerCase();
+    if(seenSegments.has(key)) return false;
+    seenSegments.add(key);
+    return true;
+  });
+  const address = addressLines.join(', ');
+
+  return { name, address, postal, phoneCode, phoneNumber };
+}
+
+function setParsedFieldValue(id, value){
+  const el = document.getElementById(id);
+  el.value = value;
+  el.classList.remove('input-error');
+  el.dispatchEvent(new Event('input'));
+}
+
+function runPasteParse(){
+  const pasteEl = document.getElementById('r_paste');
+  const parsed = parseCustomerPaste(pasteEl.value);
+  if(!parsed || (!parsed.name && !parsed.address && !parsed.postal && !parsed.phoneNumber)){
+    alert("Couldn't find enough details in that paste — please check the fields below manually.");
+    pasteEl.scrollIntoView({behavior:'smooth', block:'center'});
+    pasteEl.classList.add('input-error');
+    return;
+  }
+  pasteEl.classList.remove('input-error');
+  if(parsed.name) setParsedFieldValue('r_name', parsed.name);
+  if(parsed.phoneNumber){
+    document.getElementById('r_code').value = COUNTRY_CODES.some(c => c.code === parsed.phoneCode) ? parsed.phoneCode : '+65';
+    setParsedFieldValue('r_contact', parsed.phoneNumber);
+  }
+  if(parsed.postal) setParsedFieldValue('r_postal', parsed.postal);
+  if(parsed.address) setParsedFieldValue('r_address', parsed.address);
+
+  // Anything the paste couldn't fill in? Flag it red and jump straight to it.
+  const stillMissing = ['r_name','r_contact','r_postal','r_address'].filter(id => !document.getElementById(id).value.trim());
+  if(stillMissing.length){
+    stillMissing.forEach(id => document.getElementById(id).classList.add('input-error'));
+    document.getElementById(stillMissing[0]).scrollIntoView({behavior:'smooth', block:'center'});
+    document.getElementById(stillMissing[0]).focus();
+    triggerBlink(document.getElementById(stillMissing[0]));
+  }
+}
+
+document.getElementById('parsePasteBtn').addEventListener('click', runPasteParse);
+document.getElementById('r_paste').addEventListener('paste', () => {
+  setTimeout(runPasteParse, 0);
+});
+document.getElementById('r_paste').addEventListener('input', () => {
+  document.getElementById('r_paste').classList.remove('input-error');
+});
+
 document.getElementById('clearBtn').addEventListener('click', () => {
   const ids = ['r_ref','r_name','r_contact','r_postal','r_address'];
   ids.forEach(id => document.getElementById(id).value = '');
@@ -864,35 +1138,47 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   editingOrderIdx = null;
   refPrefix = '';
   document.getElementById('addBtn').textContent = 'Add order to manifest';
+
+  // Reset product selection so the next order starts from a clean slate
+  selectedSize = null;
+  selectedDehuVariant = null;
+  document.querySelectorAll('#sizePicker .size-btn, #dehuPicker .size-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('productCard').classList.remove('card-blink');
+
+  // Clear the paste box too, now that its contents have been used
+  const pasteEl = document.getElementById('r_paste');
+  pasteEl.value = '';
+  pasteEl.classList.remove('input-error');
 });
 
 document.getElementById('addBtn').addEventListener('click', () => {
-  let productData;
-  if(selectedCategory === 'drybox'){
-    if(!selectedSize){ alert('Pick a box size first.'); return; }
-    productData = { label: selectedSize, ...PRODUCTS[selectedSize] };
-  } else {
-    if(!selectedDehuVariant){ alert('Pick a dehumidifier variant first.'); return; }
-    const variant = selectedDehuVariant;
-    if(!dehuSpecs[variant.name]){
-      const l = parseFloat(document.getElementById('dh_length').value);
-      const w = parseFloat(document.getElementById('dh_width').value);
-      const h = parseFloat(document.getElementById('dh_height').value);
-      const wt = parseFloat(document.getElementById('dh_weight').value);
-      if(!l || !w || !h || !wt){
-        alert('Please fill in the box length, width, height and weight for this variant (first use only).');
-        return;
-      }
-      dehuSpecs[variant.name] = {length:l, width:w, height:h, weight:wt};
-    }
-    const box = dehuSpecs[variant.name];
-    productData = { label: variant.name, length: box.length, width: box.width, height: box.height,
-      weight: box.weight, value: variant.value, desc: variant.name };
-  }
-
+  // Validate the text fields first so a missing field always gets scrolled to and
+  // highlighted, even if a product hasn't been picked yet.
   if(!validateRequired(['r_ref','r_name','r_contact','r_postal','r_address'])){
     return;
   }
+
+  let productData;
+  if(selectedCategory === 'drybox'){
+    if(!selectedSize){
+      document.getElementById('productCard').scrollIntoView({behavior:'smooth', block:'center'});
+      triggerCardBlink(document.getElementById('productCard'));
+      alert('Pick a box size first.');
+      return;
+    }
+    productData = { label: selectedSize, ...PRODUCTS[selectedSize] };
+  } else {
+    if(!selectedDehuVariant){
+      document.getElementById('productCard').scrollIntoView({behavior:'smooth', block:'center'});
+      triggerCardBlink(document.getElementById('productCard'));
+      alert('Pick a dehumidifier variant first.');
+      return;
+    }
+    const variant = selectedDehuVariant;
+    productData = { label: variant.name, length: variant.box.length, width: variant.box.width, height: variant.box.height,
+      weight: variant.weight, value: variant.value, desc: variant.name };
+  }
+
   const ref = document.getElementById('r_ref').value.trim();
   const name = document.getElementById('r_name').value.trim();
   const code = document.getElementById('r_code').value;
@@ -901,6 +1187,8 @@ document.getElementById('addBtn').addEventListener('click', () => {
   const address = document.getElementById('r_address').value.trim();
   if(!isValidPostal(postal)){
     document.getElementById('r_postal').classList.add('input-error');
+    document.getElementById('r_postal').scrollIntoView({behavior:'smooth', block:'center'});
+    triggerBlink(document.getElementById('r_postal'));
     alert('Receiver postal code must be exactly 6 digits.');
     return;
   }
@@ -922,9 +1210,22 @@ document.getElementById('addBtn').addEventListener('click', () => {
   } else {
     orders.push(order);
   }
+  const finalIdx = editingOrderIdx !== null ? editingOrderIdx : orders.length - 1;
   document.getElementById('clearBtn').click();
   renderManifest();
+  highlightAddedRow(finalIdx);
 });
+
+function highlightAddedRow(idx){
+  const rows = document.querySelectorAll('#manifestArea tbody tr');
+  const row = rows[idx];
+  if(!row) return;
+  row.scrollIntoView({behavior:'smooth', block:'center'});
+  row.classList.remove('row-flash-success');
+  void row.offsetWidth; // restart animation if it just played
+  row.classList.add('row-flash-success');
+  setTimeout(() => row.classList.remove('row-flash-success'), 1700);
+}
 
 function editOrder(idx){
   const o = orders[idx];
@@ -937,7 +1238,6 @@ function editOrder(idx){
   document.getElementById('r_address').value = o.address;
   document.getElementById('r_qty').value = o.qty;
   clearFieldErrors(['r_ref','r_name','r_contact','r_postal','r_address']);
-  refPrefix = PRODUCTS[o.size] ? (o.size.toUpperCase() + '-') : '';
   selectedSenderIdx = o.senderIdx;
   selectedPersonName = (senders[o.senderIdx] || senders[0]).name;
   renderSenders();
@@ -946,19 +1246,21 @@ function editOrder(idx){
   if(PRODUCTS[o.size]){
     selectedCategory = 'drybox';
     selectedSize = o.size;
+    refPrefix = o.size.toUpperCase() + '-';
     document.querySelectorAll('.cat-btn').forEach(b=>b.classList.toggle('active', b.dataset.cat==='drybox'));
     document.getElementById('sizePicker').style.display = 'grid';
     document.getElementById('dehuPicker').style.display = 'none';
-    document.getElementById('dehuSpecForm').style.display = 'none';
     document.querySelectorAll('#sizePicker .size-btn').forEach(b=>b.classList.toggle('active', b.dataset.size===o.size));
   } else {
     selectedCategory = 'dehumidifier';
     const variant = DEHU_VARIANTS.find(v => v.name === o.size);
-    if(variant) selectedDehuVariant = variant;
+    if(variant){
+      selectedDehuVariant = variant;
+      refPrefix = variant.refillCount ? `1CG${variant.refillCount}RF-` : `RF${o.qty}-`;
+    }
     document.querySelectorAll('.cat-btn').forEach(b=>b.classList.toggle('active', b.dataset.cat==='dehumidifier'));
     document.getElementById('sizePicker').style.display = 'none';
     document.getElementById('dehuPicker').style.display = 'grid';
-    document.getElementById('dehuSpecForm').style.display = 'none';
     document.querySelectorAll('#dehuPicker .size-btn').forEach(b=>b.classList.toggle('active', b.dataset.variant===o.size));
   }
 
@@ -994,7 +1296,12 @@ function renderSummary(){
 
 function renderManifest(){
   const area = document.getElementById('manifestArea');
-  document.getElementById('downloadBtn').disabled = orders.length === 0;
+
+  const stickyBar = document.getElementById('stickyBar');
+  document.getElementById('downloadBtnSticky').disabled = orders.length === 0;
+  document.getElementById('stickyBarCount').textContent = orders.length === 1 ? '1 order queued' : `${orders.length} orders queued`;
+  stickyBar.classList.toggle('visible', orders.length > 0);
+
   renderSummary();
   renderSenders();
   if(orders.length === 0){
@@ -1014,15 +1321,19 @@ function renderManifest(){
       <td class="addr">${o.address}${o.mailbox ? ' · '+o.mailbox : ''}</td>
       <td>
         <div class="row-actions">
-          <button class="edit-row" onclick="editOrder(${i})">Edit</button>
-          <button class="rm" onclick="removeOrder(${i})">Delete</button>
+          <button class="icon-btn edit-row" onclick="editOrder(${i})" title="Edit" aria-label="Edit order">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </button>
+          <button class="icon-btn rm" onclick="removeOrder(${i})" title="Delete" aria-label="Delete order">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+          </button>
         </div>
       </td>
     </tr>`).join('');
-  area.innerHTML = `<table>
+  area.innerHTML = `<div class="table-scroll"><table>
     <thead><tr><th>#</th><th>Size</th><th>Receiver</th><th>Phone</th><th>Postal Code</th><th>Address</th><th></th></tr></thead>
     <tbody>${rows}</tbody>
-  </table>`;
+  </table></div>`;
 }
 
 // Warn before an accidental refresh or tab close wipes queued orders or
@@ -1039,7 +1350,7 @@ window.addEventListener('beforeunload', (e) => {
   }
 });
 
-document.getElementById('downloadBtn').addEventListener('click', () => {
+function performDownload(){
   const data = orders.map(o => {
     const s = senders[o.senderIdx] || senders[0];
     return [
@@ -1057,7 +1368,23 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   XLSX.utils.book_append_sheet(wb, ws, 'Upload Ready');
 
   XLSX.writeFile(wb, 'singapore_delivery_order_en.xlsx');
+}
+document.getElementById('downloadBtnSticky').addEventListener('click', performDownload);
+
+document.getElementById('fabAddProduct').addEventListener('click', () => {
+  document.getElementById('productCard').scrollIntoView({behavior:'smooth', block:'start'});
 });
+
+// Only show the "jump to product" FAB once the Product section has scrolled out of view
+const fabBtn = document.getElementById('fabAddProduct');
+const productCardEl = document.getElementById('productCard');
+function updateFabVisibility(){
+  const rect = productCardEl.getBoundingClientRect();
+  const scrolledPast = rect.bottom < 0;
+  fabBtn.classList.toggle('visible', scrolledPast);
+}
+window.addEventListener('scroll', updateFabVisibility, {passive:true});
+updateFabVisibility();
 </script>
 </body>
 </html>

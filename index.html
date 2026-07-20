@@ -566,9 +566,19 @@
     <div class="category-tabs" id="categoryTabs">
       <button type="button" class="cat-btn active" data-cat="drybox">Dry Box</button>
       <button type="button" class="cat-btn" data-cat="dehumidifier">Dehumidifier</button>
+      <button type="button" class="cat-btn" data-cat="custom">Other (Custom Size)</button>
     </div>
     <div class="sizes" id="sizePicker"></div>
     <div class="sizes" id="dehuPicker" style="display:none;"></div>
+    <div class="grid" id="customPicker" style="display:none;">
+      <div class="field full"><label>Product / item name <span class="req">*</span></label><input id="cust_label" placeholder="e.g. Camera Tripod"></div>
+      <div class="field"><label>Length (cm) <span class="req">*</span></label><input id="cust_length" type="number" step="0.1" min="0" placeholder="e.g. 40"></div>
+      <div class="field"><label>Width (cm) <span class="req">*</span></label><input id="cust_width" type="number" step="0.1" min="0" placeholder="e.g. 30"></div>
+      <div class="field"><label>Height (cm) <span class="req">*</span></label><input id="cust_height" type="number" step="0.1" min="0" placeholder="e.g. 20"></div>
+      <div class="field"><label>Weight (kg) <span class="req">*</span></label><input id="cust_weight" type="number" step="0.01" min="0" placeholder="e.g. 4.5"></div>
+      <div class="field"><label>Item value ($)</label><input id="cust_value" type="number" step="0.01" min="0" placeholder="e.g. 60.00"></div>
+      <div class="field full"><label>Item description</label><input id="cust_desc" placeholder="Optional — defaults to product name"></div>
+    </div>
   </div>
 
   <div class="card">
@@ -576,10 +586,10 @@
     <div class="paste-box">
       <label for="r_paste">Paste customer message <span class="paste-hint">— paste their name, address, postal code and phone number, and we'll sort it into the fields below</span></label>
       <textarea id="r_paste" placeholder="e.g.
-Jo *
-1 Sembawang Crescent - Skypark Residences, #02-03
-Singapore 757093
-+65 9751 7222"></textarea>
+Wei Ling *
+88 Tampines Central 1, #12-45
+Singapore 529541
++65 8123 4567"></textarea>
       <div class="addbar">
         <button class="btn-primary" id="parsePasteBtn" type="button">Sort into fields</button>
       </div>
@@ -738,8 +748,8 @@ function setRefPrefix(newPrefix){
 let senders = [
   {name:'Mazlan', code:'+65', contact:'88977830', postal:'169204', address:'1092 Lower Delta Road, #04-09', country:'Singapore'},
   {name:'Mazlan', code:'+65', contact:'88977830', postal:'169204', address:'1093 Lower Delta Rd, #04-01, Singapore 169204', country:'Singapore'},
-  {name:'JY',     code:'+65', contact:'88977830', postal:'169204', address:'1092 Lower Delta Road, #04-09', country:'Singapore'},
-  {name:'JY',     code:'+65', contact:'88977830', postal:'169204', address:'1093 Lower Delta Rd, #04-01, Singapore 169204', country:'Singapore'},
+  {name:'JY',     code:'+65', contact:'88269016', postal:'169204', address:'1092 Lower Delta Road, #04-09', country:'Singapore'},
+  {name:'JY',     code:'+65', contact:'88269016', postal:'169204', address:'1093 Lower Delta Rd, #04-01, Singapore 169204', country:'Singapore'},
   {name:'Issac',  code:'+65', contact:'88970247', postal:'169204', address:'1092 Lower Delta Road, #04-09', country:'Singapore'},
   {name:'Issac',  code:'+65', contact:'88970247', postal:'169204', address:'1093 Lower Delta Rd, #04-01, Singapore 169204', country:'Singapore'},
   {name:'Huiyi',  code:'+65', contact:'89334147', postal:'169204', address:'1092 Lower Delta Road, #04-09', country:'Singapore'},
@@ -996,12 +1006,11 @@ document.getElementById('categoryTabs').addEventListener('click', (e) => {
   selectedCategory = btn.dataset.cat;
   document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  if(selectedCategory === 'drybox'){
-    document.getElementById('sizePicker').style.display = 'grid';
-    document.getElementById('dehuPicker').style.display = 'none';
-  } else {
-    document.getElementById('sizePicker').style.display = 'none';
-    document.getElementById('dehuPicker').style.display = 'grid';
+  document.getElementById('sizePicker').style.display = selectedCategory === 'drybox' ? 'grid' : 'none';
+  document.getElementById('dehuPicker').style.display = selectedCategory === 'dehumidifier' ? 'grid' : 'none';
+  document.getElementById('customPicker').style.display = selectedCategory === 'custom' ? 'grid' : 'none';
+  if(selectedCategory === 'custom'){
+    setRefPrefix('CUST-');
   }
 });
 
@@ -1144,6 +1153,9 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   selectedDehuVariant = null;
   document.querySelectorAll('#sizePicker .size-btn, #dehuPicker .size-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('productCard').classList.remove('card-blink');
+  ['cust_label','cust_length','cust_width','cust_height','cust_weight','cust_value','cust_desc'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
 
   // Clear the paste box too, now that its contents have been used
   const pasteEl = document.getElementById('r_paste');
@@ -1167,7 +1179,7 @@ document.getElementById('addBtn').addEventListener('click', () => {
       return;
     }
     productData = { label: selectedSize, ...PRODUCTS[selectedSize] };
-  } else {
+  } else if(selectedCategory === 'dehumidifier'){
     if(!selectedDehuVariant){
       document.getElementById('productCard').scrollIntoView({behavior:'smooth', block:'center'});
       triggerCardBlink(document.getElementById('productCard'));
@@ -1177,6 +1189,22 @@ document.getElementById('addBtn').addEventListener('click', () => {
     const variant = selectedDehuVariant;
     productData = { label: variant.name, length: variant.box.length, width: variant.box.width, height: variant.box.height,
       weight: variant.weight, value: variant.value, desc: variant.name };
+  } else {
+    const custLabel = document.getElementById('cust_label').value.trim();
+    const custLength = parseFloat(document.getElementById('cust_length').value);
+    const custWidth = parseFloat(document.getElementById('cust_width').value);
+    const custHeight = parseFloat(document.getElementById('cust_height').value);
+    const custWeight = parseFloat(document.getElementById('cust_weight').value);
+    const custValue = parseFloat(document.getElementById('cust_value').value) || 0;
+    const custDesc = document.getElementById('cust_desc').value.trim();
+    if(!custLabel || !(custLength > 0) || !(custWidth > 0) || !(custHeight > 0) || !(custWeight > 0)){
+      document.getElementById('productCard').scrollIntoView({behavior:'smooth', block:'center'});
+      triggerCardBlink(document.getElementById('productCard'));
+      alert('Fill in the product name, length, width, height, and weight first.');
+      return;
+    }
+    productData = { label: custLabel, length: custLength, width: custWidth, height: custHeight,
+      weight: custWeight, value: custValue, desc: custDesc || custLabel };
   }
 
   const ref = document.getElementById('r_ref').value.trim();
@@ -1243,6 +1271,7 @@ function editOrder(idx){
   renderSenders();
 
   // Try to reselect matching product size/variant
+  const matchedDehu = DEHU_VARIANTS.find(v => v.name === o.size);
   if(PRODUCTS[o.size]){
     selectedCategory = 'drybox';
     selectedSize = o.size;
@@ -1250,18 +1279,31 @@ function editOrder(idx){
     document.querySelectorAll('.cat-btn').forEach(b=>b.classList.toggle('active', b.dataset.cat==='drybox'));
     document.getElementById('sizePicker').style.display = 'grid';
     document.getElementById('dehuPicker').style.display = 'none';
+    document.getElementById('customPicker').style.display = 'none';
     document.querySelectorAll('#sizePicker .size-btn').forEach(b=>b.classList.toggle('active', b.dataset.size===o.size));
-  } else {
+  } else if(matchedDehu){
     selectedCategory = 'dehumidifier';
-    const variant = DEHU_VARIANTS.find(v => v.name === o.size);
-    if(variant){
-      selectedDehuVariant = variant;
-      refPrefix = variant.refillCount ? `1CG${variant.refillCount}RF-` : `RF${o.qty}-`;
-    }
+    selectedDehuVariant = matchedDehu;
+    refPrefix = matchedDehu.refillCount ? `1CG${matchedDehu.refillCount}RF-` : `RF${o.qty}-`;
     document.querySelectorAll('.cat-btn').forEach(b=>b.classList.toggle('active', b.dataset.cat==='dehumidifier'));
     document.getElementById('sizePicker').style.display = 'none';
     document.getElementById('dehuPicker').style.display = 'grid';
+    document.getElementById('customPicker').style.display = 'none';
     document.querySelectorAll('#dehuPicker .size-btn').forEach(b=>b.classList.toggle('active', b.dataset.variant===o.size));
+  } else {
+    selectedCategory = 'custom';
+    refPrefix = 'CUST-';
+    document.getElementById('cust_label').value = o.size;
+    document.getElementById('cust_length').value = o.length;
+    document.getElementById('cust_width').value = o.width;
+    document.getElementById('cust_height').value = o.height;
+    document.getElementById('cust_weight').value = o.weight;
+    document.getElementById('cust_value').value = o.value;
+    document.getElementById('cust_desc').value = o.desc;
+    document.querySelectorAll('.cat-btn').forEach(b=>b.classList.toggle('active', b.dataset.cat==='custom'));
+    document.getElementById('sizePicker').style.display = 'none';
+    document.getElementById('dehuPicker').style.display = 'none';
+    document.getElementById('customPicker').style.display = 'grid';
   }
 
   document.getElementById('addBtn').textContent = 'Update order';

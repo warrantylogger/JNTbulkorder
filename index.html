@@ -566,10 +566,12 @@
     <div class="category-tabs" id="categoryTabs">
       <button type="button" class="cat-btn active" data-cat="drybox">Dry Box</button>
       <button type="button" class="cat-btn" data-cat="dehumidifier">Dehumidifier</button>
+      <button type="button" class="cat-btn" data-cat="adapter">Adapter</button>
       <button type="button" class="cat-btn" data-cat="custom">Other (Custom Size)</button>
     </div>
     <div class="sizes" id="sizePicker"></div>
     <div class="sizes" id="dehuPicker" style="display:none;"></div>
+    <div class="sizes" id="adapterPicker" style="display:none;"></div>
     <div class="grid" id="customPicker" style="display:none;">
       <div class="field full"><label>Product / item name <span class="req">*</span></label><input id="cust_label" placeholder="e.g. Camera Tripod"></div>
       <div class="field"><label>Length (cm) <span class="req">*</span></label><input id="cust_length" type="number" step="0.1" min="0" placeholder="e.g. 40"></div>
@@ -583,20 +585,17 @@
 
   <div class="card">
     <h2><span class="n">3</span>Receiver details</h2>
+    <div class="field" style="margin-bottom:22px;"><label>Reference number <span class="req">*</span></label><input id="r_ref" placeholder="e.g. 18L-DBSG20260713145042"></div>
     <div class="paste-box">
       <label for="r_paste">Paste customer message <span class="paste-hint">— paste their name, address, postal code and phone number, and we'll sort it into the fields below</span></label>
       <textarea id="r_paste" placeholder="e.g.
-Wei Ling *
-88 Tampines Central 1, #12-45
+John Doe *
+XXXXXX Address
 Singapore 529541
 +65 8123 4567"></textarea>
-      <div class="addbar">
-        <button class="btn-primary" id="parsePasteBtn" type="button">Sort into fields</button>
-      </div>
     </div>
     <div class="grid">
-      <div class="field full"><label>Reference number <span class="req">*</span></label><input id="r_ref" placeholder="e.g. 18L-DBSG20260713145042"></div>
-      <div class="field"><label>Receiver name <span class="req">*</span></label><input id="r_name" placeholder="e.g. Henry Tan"></div>
+      <div class="field"><label>Receiver name <span class="req">*</span></label><input id="r_name" placeholder="e.g. John Doe"></div>
       <div class="field">
         <label>Receiver contact number <span class="req">*</span></label>
         <div class="phone-row">
@@ -661,6 +660,7 @@ function isValidPostal(v){ return /^[0-9]{6}$/.test(v); }
 // One color for all Dry Box labels, a different color for all Dehumidifier labels
 const DRYBOX_COLOR = '#B5651D';
 const DEHU_COLOR = '#1D5FA8';
+const ADAPTER_COLOR = '#2F6B4F';
 
 // Strip whitespace automatically from contact number fields (typed or pasted)
 function stripSpacesOnInput(el){
@@ -741,6 +741,14 @@ function setRefPrefix(newPrefix){
   }
   refInput.value = (newPrefix + val).toUpperCase();
   refPrefix = newPrefix;
+}
+
+// Shortens a reference number for display in the manifest table: if it contains
+// "DBSG" followed by a long run of digits, keep only the first 4 digits after DBSG.
+// e.g. "18L-DBSG20260713145042" -> "18L-DBSG2026". The full reference is kept
+// everywhere else (form field, Excel export) — this only affects what's shown here.
+function formatRefForDisplay(ref){
+  return ref.replace(/DBSG(\d{4})\d+/i, 'DBSG$1');
 }
 
 // ---- Senders (preloaded) ----
@@ -983,6 +991,25 @@ DEHU_VARIANTS.forEach((variant, colorIdx) => {
   dehuPicker.appendChild(btn);
 });
 
+// ---- Products: Adapter ----
+const ADAPTER_PRODUCT = {label:'Adapter', length:15, width:15, height:5, weight:0.5, value:0, desc:'Adapter'};
+let selectedAdapter = false;
+const adapterPicker = document.getElementById('adapterPicker');
+(() => {
+  const btn = document.createElement('div');
+  btn.className = 'size-btn';
+  btn.dataset.adapter = 'true';
+  btn.innerHTML = `<div class="lbl" style="color:${ADAPTER_COLOR};">Adapter</div>
+    <div class="dims">${ADAPTER_PRODUCT.length}×${ADAPTER_PRODUCT.width}×${ADAPTER_PRODUCT.height}cm · ${ADAPTER_PRODUCT.weight}kg</div>`;
+  btn.addEventListener('click', () => {
+    selectedAdapter = true;
+    document.querySelectorAll('#adapterPicker .size-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    setRefPrefix('ADPT-');
+  });
+  adapterPicker.appendChild(btn);
+})();
+
 function updateDehuRefPrefix(){
   const variant = selectedDehuVariant;
   if(!variant) return;
@@ -1008,6 +1035,7 @@ document.getElementById('categoryTabs').addEventListener('click', (e) => {
   btn.classList.add('active');
   document.getElementById('sizePicker').style.display = selectedCategory === 'drybox' ? 'grid' : 'none';
   document.getElementById('dehuPicker').style.display = selectedCategory === 'dehumidifier' ? 'grid' : 'none';
+  document.getElementById('adapterPicker').style.display = selectedCategory === 'adapter' ? 'grid' : 'none';
   document.getElementById('customPicker').style.display = selectedCategory === 'custom' ? 'grid' : 'none';
   if(selectedCategory === 'custom'){
     setRefPrefix('CUST-');
@@ -1131,7 +1159,6 @@ function runPasteParse(){
   }
 }
 
-document.getElementById('parsePasteBtn').addEventListener('click', runPasteParse);
 document.getElementById('r_paste').addEventListener('paste', () => {
   setTimeout(runPasteParse, 0);
 });
@@ -1151,7 +1178,8 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   // Reset product selection so the next order starts from a clean slate
   selectedSize = null;
   selectedDehuVariant = null;
-  document.querySelectorAll('#sizePicker .size-btn, #dehuPicker .size-btn').forEach(b => b.classList.remove('active'));
+  selectedAdapter = false;
+  document.querySelectorAll('#sizePicker .size-btn, #dehuPicker .size-btn, #adapterPicker .size-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('productCard').classList.remove('card-blink');
   ['cust_label','cust_length','cust_width','cust_height','cust_weight','cust_value','cust_desc'].forEach(id => {
     document.getElementById(id).value = '';
@@ -1189,6 +1217,14 @@ document.getElementById('addBtn').addEventListener('click', () => {
     const variant = selectedDehuVariant;
     productData = { label: variant.name, length: variant.box.length, width: variant.box.width, height: variant.box.height,
       weight: variant.weight, value: variant.value, desc: variant.name };
+  } else if(selectedCategory === 'adapter'){
+    if(!selectedAdapter){
+      document.getElementById('productCard').scrollIntoView({behavior:'smooth', block:'center'});
+      triggerCardBlink(document.getElementById('productCard'));
+      alert('Pick the adapter first.');
+      return;
+    }
+    productData = { ...ADAPTER_PRODUCT };
   } else {
     const custLabel = document.getElementById('cust_label').value.trim();
     const custLength = parseFloat(document.getElementById('cust_length').value);
@@ -1290,6 +1326,16 @@ function editOrder(idx){
     document.getElementById('dehuPicker').style.display = 'grid';
     document.getElementById('customPicker').style.display = 'none';
     document.querySelectorAll('#dehuPicker .size-btn').forEach(b=>b.classList.toggle('active', b.dataset.variant===o.size));
+  } else if(o.size === ADAPTER_PRODUCT.label){
+    selectedCategory = 'adapter';
+    selectedAdapter = true;
+    refPrefix = 'ADPT-';
+    document.querySelectorAll('.cat-btn').forEach(b=>b.classList.toggle('active', b.dataset.cat==='adapter'));
+    document.getElementById('sizePicker').style.display = 'none';
+    document.getElementById('dehuPicker').style.display = 'none';
+    document.getElementById('adapterPicker').style.display = 'grid';
+    document.getElementById('customPicker').style.display = 'none';
+    document.querySelectorAll('#adapterPicker .size-btn').forEach(b=>b.classList.add('active'));
   } else {
     selectedCategory = 'custom';
     refPrefix = 'CUST-';
@@ -1356,7 +1402,7 @@ function renderManifest(){
       <td><span class="tag">${o.size}</span></td>
       <td>
         <div>${o.name}</div>
-        <div class="ref">${o.ref}</div>
+        <div class="ref">${formatRefForDisplay(o.ref)}</div>
       </td>
       <td>${o.code} ${o.contact}</td>
       <td class="postal-cell">${o.postal}</td>

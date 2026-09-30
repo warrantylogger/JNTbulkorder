@@ -748,7 +748,7 @@ function setRefPrefix(newPrefix){
 // e.g. "18L-DBSG20260713145042" -> "18L-DBSG2026". The full reference is kept
 // everywhere else (form field, Excel export) — this only affects what's shown here.
 function formatRefForDisplay(ref){
-  return ref.replace(/DBSG(\d{4})\d+/i, 'DBSG$1');
+  return ref.replace(/DBSG(\d+)/i, (match, digits) => 'DBSG' + digits.slice(-4));
 }
 
 // ---- Senders (preloaded) ----

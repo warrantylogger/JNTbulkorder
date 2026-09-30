@@ -604,7 +604,6 @@ Singapore 529541
         </div>
       </div>
       <div class="field"><label>Receiver postal code <span class="req">*</span></label><input id="r_postal" placeholder="e.g. 670614" maxlength="6" inputmode="numeric" pattern="[0-9]{6}"></div>
-      <div class="field"><label>Item quantity</label><input id="r_qty" type="number" min="1" value="1"></div>
       <div class="field full"><label>Receiver address <span class="req">*</span></label><textarea id="r_address" placeholder="Block, street, unit number"></textarea></div>
     </div>
     <div class="addbar">
@@ -1016,16 +1015,9 @@ function updateDehuRefPrefix(){
   if(variant.refillCount){
     setRefPrefix(`1CG${variant.refillCount}RF-`);
   } else {
-    const qty = parseInt(document.getElementById('r_qty').value) || 1;
-    setRefPrefix(`RF${qty}-`);
+    setRefPrefix(`RF1-`);
   }
 }
-// Keep the Refill Only prefix in sync as the quantity changes
-document.getElementById('r_qty').addEventListener('input', () => {
-  if(selectedCategory === 'dehumidifier' && selectedDehuVariant && !selectedDehuVariant.refillCount){
-    updateDehuRefPrefix();
-  }
-});
 
 document.getElementById('categoryTabs').addEventListener('click', (e) => {
   const btn = e.target.closest('.cat-btn');
@@ -1170,7 +1162,6 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   const ids = ['r_ref','r_name','r_contact','r_postal','r_address'];
   ids.forEach(id => document.getElementById(id).value = '');
   clearFieldErrors(ids);
-  document.getElementById('r_qty').value = 1;
   editingOrderIdx = null;
   refPrefix = '';
   document.getElementById('addBtn').textContent = 'Add order to manifest';
@@ -1264,7 +1255,7 @@ document.getElementById('addBtn').addEventListener('click', () => {
     name, code, contact, postal, address,
     mailbox: '',
     instr: '',
-    qty: parseInt(document.getElementById('r_qty').value) || 1,
+    qty: 1,
     insure: '',
     length: productData.length, width: productData.width, height: productData.height,
     weight: productData.weight, value: productData.value, desc: productData.desc
@@ -1300,7 +1291,6 @@ function editOrder(idx){
   document.getElementById('r_contact').value = o.contact;
   document.getElementById('r_postal').value = o.postal;
   document.getElementById('r_address').value = o.address;
-  document.getElementById('r_qty').value = o.qty;
   clearFieldErrors(['r_ref','r_name','r_contact','r_postal','r_address']);
   selectedSenderIdx = o.senderIdx;
   selectedPersonName = (senders[o.senderIdx] || senders[0]).name;
@@ -1443,7 +1433,7 @@ function performDownload(){
     const s = senders[o.senderIdx] || senders[0];
     return [
       o.size, s.country, s.country, s.country, s.country,
-      o.ref, o.cod, s.name, `${s.code} ${s.contact}`, s.postal, s.address,
+      formatRefForDisplay(o.ref), o.cod, s.name, `${s.code} ${s.contact}`, s.postal, s.address,
       '', o.name, `${o.code} ${o.contact}`, o.postal, o.address,
       o.mailbox, o.instr, o.length, o.width, o.height, o.weight,
       o.value, o.desc, o.qty, '件', o.insure
